@@ -1,35 +1,35 @@
-FROM ubuntu:16.04 AS build
+FROM debian:trixie AS build
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get -y dist-upgrade
-RUN apt-get install -y build-essential cmake openssl libcurl4-openssl-dev libssl-dev curl
+RUN apt-get install -y build-essential cmake openssl libcurl4-openssl-dev libssl-dev curl libpugixml-dev libuv1-dev libjansson-dev zlib1g-dev libhiredis-dev
 
 RUN mkdir /root/fs-out
 
 WORKDIR /root/
 
-RUN curl -L http://www.digip.org/jansson/releases/jansson-2.11.tar.gz > jansson.tar.gz
-RUN mkdir jansson-src
-RUN tar -xvzf jansson.tar.gz --strip 1 -C jansson-src
-WORKDIR jansson-src
-RUN ./configure CFLAGS="-fPIC" --disable-shared
-RUN make install DESTDIR=/root/fs-out
+#RUN curl -L http://www.digip.org/jansson/releases/jansson-2.11.tar.gz > jansson.tar.gz
+#RUN mkdir jansson-src
+#RUN tar -xvzf jansson.tar.gz --strip 1 -C jansson-src
+#WORKDIR jansson-src
+#RUN ./configure CFLAGS="-fPIC" --disable-shared
+#RUN make install DESTDIR=/root/fs-out
 
-WORKDIR /root/
-RUN curl -L https://www.openssl.org/source/openssl-1.0.2p.tar.gz > openssl.tar.gz
-RUN mkdir openssl-src
-RUN tar -xvzf openssl.tar.gz --strip 1 -C openssl-src
-WORKDIR openssl-src
-RUN ./Configure linux-x86_64 --prefix=/usr/local enable-ssl3 enable-ssl2 enable-shared -fPIC
-RUN make install INSTALL_PREFIX=/root/fs-out
+#WORKDIR /root/
+#RUN curl -L https://www.openssl.org/source/openssl-1.0.2p.tar.gz > openssl.tar.gz
+#RUN mkdir openssl-src
+#RUN tar -xvzf openssl.tar.gz --strip 1 -C openssl-src
+#WORKDIR openssl-src
+#RUN ./Configure linux-x86_64 --prefix=/usr/local enable-ssl3 enable-ssl2 enable-shared -fPIC
+#RUN make install INSTALL_PREFIX=/root/fs-out
 
-WORKDIR /root/
-RUN curl -L https://curl.haxx.se/download/curl-7.61.1.tar.gz > curl.tar.gz
-RUN mkdir curl-src
-RUN tar -xvzf curl.tar.gz --strip 1 -C curl-src
-WORKDIR curl-src
-RUN ./configure --without-ssl --disable-shared
-RUN make
-RUN make DESTDIR=/root/fs-out install
+#WORKDIR /root/
+#RUN curl -L https://curl.haxx.se/download/curl-7.61.1.tar.gz > curl.tar.gz
+#RUN mkdir curl-src
+#RUN tar -xvzf curl.tar.gz --strip 1 -C curl-src
+#WORKDIR curl-src
+#RUN ./configure --without-ssl --disable-shared
+#RUN make
+#RUN make DESTDIR=/root/fs-out install
 
 WORKDIR /root/
 RUN curl -L https://codeload.github.com/alanxz/rabbitmq-c/tar.gz/v0.9.0 > rabbitmq.tar.gz
@@ -40,19 +40,20 @@ RUN cmake -DCMAKE_BUILD_TYPE="Release" -DENABLE_SSL_SUPPORT="OFF"  ../rabbitmq-s
 RUN make
 RUN make DESTDIR=/root/fs-out install
 
-WORKDIR /root/
-RUN curl -L http://github.com/zeux/pugixml/releases/download/v1.9/pugixml-1.9.tar.gz > pugixml.tar.gz
-RUN mkdir pugixml-src pugixml-bin
-RUN tar -xvzf pugixml.tar.gz --strip 1 -C pugixml-src
-WORKDIR pugixml-bin
-RUN cmake -DCMAKE_BUILD_TYPE="Release" ../pugixml-src
-RUN make
-RUN make DESTDIR=/root/fs-out install
+#WORKDIR /root/
+#RUN curl -L http://github.com/zeux/pugixml/releases/download/v1.9/pugixml-1.9.tar.gz > pugixml.tar.gz
+#RUN mkdir pugixml-src pugixml-bin
+#RUN tar -xvzf pugixml.tar.gz --strip 1 -C pugixml-src
+#WORKDIR pugixml-bin
+#RUN cmake -DCMAKE_BUILD_TYPE="Release" ../pugixml-src
+#RUN make
+#RUN make DESTDIR=/root/fs-out install
 
 COPY code /root/code
+COPY cmake /root/cmake
 RUN mkdir /root/os-bin /root/os-make
 WORKDIR /root/os-make
-run cmake -DCMAKE_BINARY_DIR="/root/os-bin" -DCMAKE_CXX_FLAGS="-I/root/fs-out/usr/local/include -L/root/fs-out/usr/local/lib -lz -L/root/fs-out/usr/local/lib/x86_64-linux-gnu/"  -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_BUILD_TYPE="Release" ../code
+run cmake -DCMAKE_BINARY_DIR="/root/os-bin" -DCMAKE_CXX_FLAGS="-I/root/fs-out/usr/local/include -L/root/fs-out/usr/local/lib -lz -L/root/fs-out/usr/local/lib/x86_64-linux-gnu/" -DRABBITMQ_DIR=/root/fs-out/usr/local -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_BUILD_TYPE="Release" ../code
 run make
 RUN mkdir -p /root/fs-out/opt/openspy/bin /root/fs-out/opt/openspy/lib
 RUN mv /root/os-make/bin/* /root/fs-out/opt/openspy/bin

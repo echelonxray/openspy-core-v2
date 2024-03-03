@@ -1,5 +1,5 @@
 #include "tasks.h"
-#include <rabbitmq-c/tcp_socket.h>
+#include <amqp_tcp_socket.h>
 
 #include <OS/tasks.h>
 

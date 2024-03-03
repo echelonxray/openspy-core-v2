@@ -3,7 +3,7 @@
 #include <string>
 #include <hiredis/hiredis.h>
 #include <hiredis/hiredis_ssl.h>
-#include <rabbitmq-c/amqp.h>
+#include <amqp.h>
 #include <uv.h>
 namespace OS {
 	class Address;
